@@ -52,8 +52,11 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   UInts.msg
-  Image_BGR.msg
+  Image_RGB.msg
+  Image_Depth.msg
+  Image_Infrared.msg
   Image_IMU.msg
+  Realsense_Data.msg
 )
 
 ## Generate services in the 'srv' folder
