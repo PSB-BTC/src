@@ -4,6 +4,7 @@ import pyrealsense2 as rs
 import numpy as np
 import rospy
 from sensor_msgs.msg import Image
+import signal
 
 def setVideoResolution(width, height):
     global fontScale
@@ -23,6 +24,13 @@ def setVideoResolution(width, height):
 
 
 def realsense_ir(SHOW_IMAGES, FRAMERATE, RESOLUTION_IR):
+    def keyboardInterruptHandler(*args):
+        print("KeyboardInterrupt (ID: {}) has been caught. Cleaning up...".format(signal))
+        print('Cleanup pipeline')
+        cv.destroyAllWindows()
+        p.stop()
+        exit(0)
+    signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
     # Defines
     font = cv.FONT_HERSHEY_SIMPLEX #for drawing on the images

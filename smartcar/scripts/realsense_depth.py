@@ -6,6 +6,7 @@ import rospy
 from smartcar.msg import Image_BGR
 from realsense_camera import averageDistance
 import time
+import signal
 
 def setVideoResolution(width, height):
     global fontScale
@@ -25,6 +26,13 @@ def setVideoResolution(width, height):
 
 
 def realsense_depth(DEPTH_PRE_PROCESSING, SHOW_IMAGES, FRAMERATE, RESOLUTION_DEPTH, VISUAL_PRESET):
+    def keyboardInterruptHandler(*args):
+        print("KeyboardInterrupt (ID: {}) has been caught. Cleaning up...".format(signal))
+        print('Cleanup pipeline')
+        cv.destroyAllWindows()
+        p.stop()
+        exit(0)
+    signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
     # Defines
     font = cv.FONT_HERSHEY_SIMPLEX #for drawing on the images

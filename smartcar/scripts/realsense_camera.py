@@ -5,7 +5,14 @@ import numpy as np
 import time
 import rospy
 from smartcar.msg import Image_BGR
-
+import signal
+#
+# def keyboardInterruptHandler(*args):
+#     print("KeyboardInterrupt (ID: {}) has been caught. Cleaning up...".format(signal))
+#     print('Cleanup pipeline')
+#     cv.destroyAllWindows()
+#     p.stop()
+#     exit(0)
 
 def setVideoResolution(width, height):
     global fontScale
@@ -44,7 +51,14 @@ def averageDistance(depth_image, start_pixel_x, size_x, start_pixel_y, size_y, d
     avgDist = round(sum(averageList)/len(averageList), 2)
     return avgDist
 
-def realsense_rgb(DEPTH_ENABLED, DEPTH_PRE_PROCESSING, SHOW_IMAGES, FRAMERATE, RESOLUTION_COLOR, RESOLUTION_DEPTH, RESOLUTION_IR, IR_ENABLED, VISUAL_PRESET):
+def realsense_rgb(DEPTH_ENABLED, DEPTH_PRE_PROCESSING, SHOW_IMAGES, FRAMERATE, RESOLUTION_COLOR, RESOLUTION_DEPTH_IR, IR_ENABLED, VISUAL_PRESET):
+    def keyboardInterruptHandler(*args):
+        print("KeyboardInterrupt (ID: {}) has been caught. Cleaning up...".format(signal))
+        print('Cleanup pipeline')
+        cv.destroyAllWindows()
+        p.stop()
+        exit(0)
+    signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
     # Defines
     font =          cv.FONT_HERSHEY_SIMPLEX # for drawing on the images
@@ -53,35 +67,26 @@ def realsense_rgb(DEPTH_ENABLED, DEPTH_PRE_PROCESSING, SHOW_IMAGES, FRAMERATE, R
     thickness =     2 # for drawing on the images
     hole_filling =  rs.hole_filling_filter()
 
-
-
-
     # Set video resolution
     PIXEL_WIDTH, PIXEL_HEIGHT =                 setVideoResolution(width=RESOLUTION_COLOR[0],
                                                                    height=RESOLUTION_COLOR[1])
-    PIXEL_WIDTH_DEPTH, PIXEL_HEIGHT_DEPTH =     setVideoResolution(width=RESOLUTION_DEPTH[0],
-                                                                   height=RESOLUTION_DEPTH[1])
-    PIXEL_WIDTH_IR, PIXEL_HEIGHT_IR =           setVideoResolution(width=RESOLUTION_IR[0],
-                                                                   height=RESOLUTION_IR[1])
-    if DEPTH_ENABLED and IR_ENABLED == True:
-        PIXEL_WIDTH_DEPTH, PIXEL_HEIGHT_DEPTH = setVideoResolution(width=RESOLUTION_IR[0],
-                                                                   height=RESOLUTION_IR[1])
+    PIXEL_WIDTH_DEPTH, PIXEL_HEIGHT_DEPTH =     setVideoResolution(width=RESOLUTION_DEPTH_IR[0],
+                                                                   height=RESOLUTION_DEPTH_IR[1])
+    PIXEL_WIDTH_IR, PIXEL_HEIGHT_IR =           setVideoResolution(width=RESOLUTION_DEPTH_IR[0],
+                                                                   height=RESOLUTION_DEPTH_IR[1])
 
     if (DEPTH_ENABLED or IR_ENABLED == True) or PIXEL_WIDTH == 1920:
         FRAMERATE = 30
 
-    # Allign frames. NOTE: Possible performance issues when aligning
-    # align_to = rs.stream.color
-    # align = rs.align(align_to)
-
     # Create a pipeline
+
     p =      rs.pipeline()
     config = rs.config()
     config.enable_stream(rs.stream.color, PIXEL_WIDTH, PIXEL_HEIGHT, rs.format.rgb8, FRAMERATE)
-    if DEPTH_ENABLED == True:
-        config.enable_stream(rs.stream.depth, PIXEL_WIDTH_DEPTH, PIXEL_HEIGHT_DEPTH, rs.format.z16, FRAMERATE)
-    if IR_ENABLED == True:
-        config.enable_stream(rs.stream.infrared, PIXEL_WIDTH_IR, PIXEL_HEIGHT_IR, rs.format.y8, FRAMERATE)
+    # if DEPTH_ENABLED == True:
+    config.enable_stream(rs.stream.depth, PIXEL_WIDTH_DEPTH, PIXEL_HEIGHT_DEPTH, rs.format.z16, FRAMERATE)
+    # if IR_ENABLED == True:
+    config.enable_stream(rs.stream.infrared, PIXEL_WIDTH_IR, PIXEL_HEIGHT_IR, rs.format.y8, FRAMERATE)
     profile = p.start(config)
 
     # ROS defines
@@ -91,35 +96,35 @@ def realsense_rgb(DEPTH_ENABLED, DEPTH_PRE_PROCESSING, SHOW_IMAGES, FRAMERATE, R
     depth_sensor = profile.get_device().first_depth_sensor() # Collect depth scaling data from depth sensor
     depth_scale = depth_sensor.get_depth_scale()
 
-    if DEPTH_ENABLED == True:
+    # if DEPTH_ENABLED == True:
 
-        visual_preset_dict = {'custom': 0.0,
-                              'default': 1.0,
-                              'no_ambient_light': 2.0,
-                              'low_ambient_light': 3.0,
-                              'max_range': 4.0,
-                              'short_range': 5.0}
-
-        set_preset = visual_preset_dict[VISUAL_PRESET]
-
-        depth_sensor.set_option(rs.option.visual_preset, set_preset)
-        time.sleep(1)
-
-        print('Visual preset set: {}. | {}'.format(depth_sensor.get_option(rs.option.visual_preset), VISUAL_PRESET))
-
-        laser_power = depth_sensor.get_option(rs.option.laser_power)
-        laser_range = depth_sensor.get_option_range(rs.option.laser_power)
-        print("laser power range = ", laser_range.min, "~", laser_range.max)
-        set_laser = 0
-        if laser_power + 10 > laser_range.max:
-            set_laser = laser_range.max
-        else:
-            set_laser = laser_power + 10
-
-        depth_sensor.set_option(rs.option.laser_power, set_laser)
-        time.sleep(1)
-        print('laserpower =', depth_sensor.get_option(rs.option.laser_power))
-
+        # visual_preset_dict = {'custom': 0.0,
+        #                       'default': 1.0,
+        #                       'no_ambient_light': 2.0,
+        #                       'low_ambient_light': 3.0,
+        #                       'max_range': 4.0,
+        #                       'short_range': 5.0}
+        #
+        # set_preset = visual_preset_dict[VISUAL_PRESET]
+        #
+        # depth_sensor.set_option(rs.option.visual_preset, set_preset)
+        # time.sleep(1)
+        #
+        # print('Visual preset set: {}. | {}'.format(depth_sensor.get_option(rs.option.visual_preset), VISUAL_PRESET))
+        #
+        # laser_power = depth_sensor.get_option(rs.option.laser_power)
+        # laser_range = depth_sensor.get_option_range(rs.option.laser_power)
+        # print("laser power range = ", laser_range.min, "~", laser_range.max)
+        # set_laser = 0
+        # if laser_power + 10 > laser_range.max:
+        #     set_laser = laser_range.max
+        # else:
+        #     set_laser = laser_power + 10
+        #
+        # depth_sensor.set_option(rs.option.laser_power, set_laser)
+        # time.sleep(1)
+        # print('laserpower =', depth_sensor.get_option(rs.option.laser_power))
+    time.sleep(1)
     while not rospy.is_shutdown():
 
         start = time.time() # For FPS calculation
@@ -140,50 +145,63 @@ def realsense_rgb(DEPTH_ENABLED, DEPTH_PRE_PROCESSING, SHOW_IMAGES, FRAMERATE, R
         if DEPTH_ENABLED == True:
 
             depth_frame = frames.get_depth_frame()
+            c = rs.colorizer()
+            colorized_depth = np.asanyarray(c.colorize(depth_frame).get_data())
+
+            # Allign frames. NOTE: Possible performance issues when aligning
+            align = rs.align(rs.stream.color)
+            frames = align.process(frames)
+
+            alligned_depth_frame = frames.get_depth_frame()
+            colorized_depth = np.asanyarray(c.colorize(alligned_depth_frame).get_data())
+
+            depth = np.asanyarray(alligned_depth_frame.get_data())
 
             # Define image center point
-            image_origin = int((depth_frame.get_width() / 2)), int(depth_frame.get_height() / 2)
+            x, y = int((alligned_depth_frame.get_width() / 2)), int(alligned_depth_frame.get_height() / 2)
 
             # Apply depth filter
             if DEPTH_PRE_PROCESSING == True:
                 depth_frame = hole_filling.process(depth_frame)
 
-            # Colorize depth image and process to numpy array
-            c = rs.colorizer()
-            colorized_depth = np.asanyarray(c.colorize(depth_frame).get_data())
-            uncolorized_depth = np.asanyarray(depth_frame.get_data())
-
-            # Get distance information of centre pixel
-            depth_pixel = uncolorized_depth[image_origin[0], image_origin[1]].astype(float)
-            distance = round(depth_pixel * depth_scale, 2)
+            uncolorized_depth = np.asanyarray(alligned_depth_frame.get_data())
 
             # Box size (ROI) around image origin
             box_width  = 50
             box_height = 50
 
-            avgDist = averageDistance(uncolorized_depth,
-                                      start_pixel_x=(image_origin[0] - int((box_width / 2))),
-                                      # Define coordinate of ROI box X-axis (left boundary)
-                                      size_x=(image_origin[0] + int((box_width / 2))),
-                                      # Define coordinate of ROI box X-axis (right boundary)
-                                      start_pixel_y=(image_origin[1] - int((box_height / 2))),
-                                      # Define coordinate of ROI box Y-axis (upper boundary)
-                                      size_y=(image_origin[1] + int((box_height / 2))),
-                                      depth_scale=depth_scale)
-                                      # Define coordinate of ROI box Y-axis (lower boundary)
+            # avgDist = averageDistance(uncolorized_depth,
+            #                           start_pixel_x=(image_origin[0] - int((box_width / 2))),
+            #                           # Define coordinate of ROI box X-axis (left boundary)
+            #                           size_x=(image_origin[0] + int((box_width / 2))),
+            #                           # Define coordinate of ROI box X-axis (right boundary)
+            #                           start_pixel_y=(image_origin[1] - int((box_height / 2))),
+            #                           # Define coordinate of ROI box Y-axis (upper boundary)
+            #                           size_y=(image_origin[1] + int((box_height / 2))),
+            #                           depth_scale=depth_scale)
+            #                           # Define coordinate of ROI box Y-axis (lower boundary)
+
+            x, y ,w, h = int(x-(box_width/2)), int(y-(box_height/2)), box_width, box_height
+            depth = depth[x:x+w, y:y+h].astype(float)
+            depth_crop = depth.copy()
+            depth_res = depth_crop[depth_crop != 0]
+            depth_res = depth_res * depth_scale
+
+            distance = "NAN"
+            if depth_res.size != 0:
+                distance = round(min(depth_res), 2)
 
             # Show the depth image
             if SHOW_IMAGES == True:
                 # Draw on the image
                 cv.putText(color_img, "Distance: " + str(distance) + ' m', (300, 300), font, fontScale, color, thickness)
-                leftTop = int(PIXEL_WIDTH / 2 - box_width / 2), int(PIXEL_HEIGHT / 2 - box_height / 2)
-                rightBottom = int(PIXEL_WIDTH / 2 + box_width / 2), int(PIXEL_HEIGHT / 2 + box_height / 2)
-                cv.rectangle(color_img, leftTop, rightBottom, color, thickness)
 
+                #cv.rectangle(color_img, (x,y), (x+w, y+h), color, thickness)
                 cv.imshow('Depth', colorized_depth)
 
-            d = uncolorized_depth.ravel()
-            d = d.tolist()
+            # d = uncolorized_depth.ravel()
+            # d = d.tolist()
+            d = [0]
 
         if IR_ENABLED == True:
 
@@ -241,21 +259,20 @@ if __name__ == '__main__':
 
     # Settings
 
-    DEPTH_ENABLED = False
-    DEPTH_PRE_PROCESSING = True
+    DEPTH_ENABLED = True
+    DEPTH_PRE_PROCESSING = False
     VISUAL_PRESET = 'max_range' # Options are: custom, default, no_ambient_light, low_ambient_light, max_range, short_range
-    IR_ENABLED = False
+    IR_ENABLED = True
 
-    SHOW_IMAGES = True
+    SHOW_IMAGES = False
     FRAMERATE = 30
 
 
-    RESOLUTION_COLOR = (640, 480) #  Example resolutions color image (RS L515): 640 x 480 | 1280 x 720 | 1920 x 1080
-    RESOLUTION_DEPTH = (640, 480) #  Example resolutions depth image (RS L515): 640 x 480 | 1024 x 768
-    RESOLUTION_IR    = (640, 480)
+    RESOLUTION_COLOR = (1280, 720) #  Example resolutions color image (RS L515): 640 x 480 | 1280 x 720 | 1920 x 1080
+    RESOLUTION_DEPTH_IR = (1024, 768) #  Example resolutions depth image (RS L515): 640 x 480 | 1024 x 768
 
     try:
-        realsense_rgb(DEPTH_ENABLED, DEPTH_PRE_PROCESSING, SHOW_IMAGES, FRAMERATE, RESOLUTION_COLOR, RESOLUTION_DEPTH, RESOLUTION_IR, IR_ENABLED, VISUAL_PRESET)
+        realsense_rgb(DEPTH_ENABLED, DEPTH_PRE_PROCESSING, SHOW_IMAGES, FRAMERATE, RESOLUTION_COLOR, RESOLUTION_DEPTH_IR, IR_ENABLED, VISUAL_PRESET)
 
     except rospy.ROSInterruptException:
         pass

@@ -5,6 +5,7 @@ import numpy as np
 import rospy
 from smartcar.msg import Image_IMU
 import matplotlib.pyplot as plt
+import signal
 
 class plot():
 
@@ -116,6 +117,13 @@ def accel_data(accel):
 
 
 def realsense_IMU(FREQUENCY, PLOT_DATA, G):
+    def keyboardInterruptHandler(*args):
+        print("KeyboardInterrupt (ID: {}) has been caught. Cleaning up...".format(signal))
+        print('Cleanup pipeline')
+        cv.destroyAllWindows()
+        p.stop()
+        exit(0)
+    signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
     # Create a pipeline
     p = rs.pipeline()
@@ -200,9 +208,9 @@ if __name__ == '__main__':
     rospy.init_node(nodeName)
 
     # Settings
-    PLOT_DATA = True
+    PLOT_DATA = False
     G = False #Data unit = m/s^2. If set on True, data will be presented in G-force.
-    FREQUENCY = 400 # Hz
+    FREQUENCY = 100 # Hz
 
     try:
         realsense_IMU(FREQUENCY, PLOT_DATA, G)

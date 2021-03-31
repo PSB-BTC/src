@@ -170,6 +170,7 @@ catkin_install_python(PROGRAMS
   scripts/visual_perception.py
   scripts/control_algorithm.py
   scripts/realsense_IMU.py
+  scripts/ultrasonic_sensor_1.py
 
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
