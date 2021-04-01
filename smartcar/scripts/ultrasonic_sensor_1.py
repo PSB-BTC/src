@@ -26,7 +26,7 @@ def delayMilliSecond(ms):
 
 def ultrasonicJetson():
 
-    pub = rospy.Publisher('/ultrasonic_sensor_1', Range, queue_size=10)
+    pub = rospy.Publisher('ultrasonic_sensor_1', Range, queue_size=10)
 
     # GPIO.setwarnings(False)
 
@@ -94,9 +94,6 @@ def ultrasonicJetson():
 
         # Wait before next measurement
         delayMilliSecond(60)
-
-        if (cm < 1.0):
-            loop = False
 
         pub.publish(radiation_type=0, min_range=2, max_range=400, range=cm)
 

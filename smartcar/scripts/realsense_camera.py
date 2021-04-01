@@ -172,6 +172,8 @@ def realsense_rgb(DEPTH_PRE_PROCESSING, ALLIGN_FRAMES, SHOW_IMAGES, SEND_IMAGES,
         if DEPTH_ENABLED:
 
             depth_frame = frames.get_depth_frame()
+            x, y = int((depth_frame.get_width() / 2)), int(depth_frame.get_height() / 2) #define image origin
+
             # Apply depth filter
             if DEPTH_PRE_PROCESSING:
                 depth_frame = hole_filling.process(depth_frame)
@@ -188,15 +190,16 @@ def realsense_rgb(DEPTH_PRE_PROCESSING, ALLIGN_FRAMES, SHOW_IMAGES, SEND_IMAGES,
 
                 depth = np.asanyarray(alligned_depth_frame.get_data())
 
-                #Define image center point
+                # update image origin
                 x, y = int((alligned_depth_frame.get_width() / 2)), int(alligned_depth_frame.get_height() / 2)
 
                 uncolorized_depth = np.asanyarray(alligned_depth_frame.get_data())
             else:
+
                 colorized_depth = np.asanyarray(c.colorize(depth_frame).get_data())
                 uncolorized_depth = np.asanyarray(depth_frame.get_data())
                 depth = uncolorized_depth
-                x, y = int((depth_frame.get_width() / 2)), int(depth_frame.get_height() / 2)
+
 
             # Box size (ROI) around image origin
             box_width  = 50
@@ -224,8 +227,8 @@ def realsense_rgb(DEPTH_PRE_PROCESSING, ALLIGN_FRAMES, SHOW_IMAGES, SEND_IMAGES,
                 distance = round(min(depth_res), 2)
 
             # Show the depth image
-            # if SHOW_IMAGES:
-            #     cv.imshow('Depth', colorized_depth)
+            if SHOW_IMAGES:
+                cv.imshow('Depth', colorized_depth)
 
             if SEND_IMAGES:
                 d = uncolorized_depth.ravel()
@@ -311,10 +314,10 @@ if __name__ == '__main__':
     DEPTH_PRE_PROCESSING = False
     ALLIGN_FRAMES = False
     VISUAL_PRESET = 'short_range' # Options are: custom, default, no_ambient_light, low_ambient_light, max_range, short_range
-    IR_ENABLED = False
+    IR_ENABLED = True
 
-    SHOW_IMAGES = True
-    SEND_IMAGES = False
+    SHOW_IMAGES = False
+    SEND_IMAGES = True
     FRAMERATE = 30
 
 
